@@ -4,7 +4,7 @@
 #include <vector>
 #include <cstddef>
 
-// cada entrada guarda la posicion del nodo y sus prioridades
+// en cada entrada guardamos la posicion del nodo y sus prioridades
 struct EntradaAbierta {
     std::size_t indiceNodo;
     double f;
@@ -40,22 +40,22 @@ private:
 public:
     Abierta();
 
-    // inserta un nodo indicando su indice y sus prioridades
+    // insertamos un nodo indicando su indice y sus prioridades
     void insertar(std::size_t indiceNodo, double f, double h);
 
-    // extrae la entrada con menor prioridad
+    // extraemos la entrada con menor prioridad
     EntradaAbierta extraerMinimo();
 
-    // consulta la entrada con menor prioridad sin eliminarla
+    // consultamos la entrada con menor prioridad sin eliminarla
     const EntradaAbierta& consultarMinimo() const;
 
-    // comprueba si quedan entradas pendientes
+    // comprobamos si quedan entradas pendientes
     bool estaVacia() const;
 
-    // devuelve el numero de entradas almacenadas
+    // devolvemos el numero de entradas almacenadas
     std::size_t tamano() const;
 
-    // devuelve el tamaño maximo que ha alcanzado la abierta
+    // devolvemos el tamaño maximo que ha alcanzado la abierta
     std::size_t obtenerMaximoAlcanzado() const;
 
     // eliminamos todas las entradas almacenadas

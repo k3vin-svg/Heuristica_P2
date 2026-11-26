@@ -25,7 +25,7 @@ std::size_t Cerrada::tamano() const {
     return cantidad;
 }
 
-// si el contador está a 0, la cerrada está vacía
+// si el contador está a 0 --> la lista cerrada está vacia
 bool Cerrada::estaVacia() const {
     return cantidad == 0;
 }
