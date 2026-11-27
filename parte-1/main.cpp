@@ -64,10 +64,8 @@ namespace {
 
         std::cout << "Nodos expandidos: " << resultado.expandidos << '\n';
         std::cout << "Nodos generados: " << resultado.generados << '\n';
-        std::cout << "Maximo de abierta: " << resultado.maximoAbierta << '\n';
-
         std::cout << std::fixed << std::setprecision(3);
-        std::cout << "Tiempo de busqueda: " << tiempo << " ms\n\n";
+        std::cout << "Tiempo de busqueda: " << tiempo << "ms\n\n";
     }
 }
 
@@ -185,7 +183,7 @@ int main(int argc, char* argv[]) {
             );
         }
 
-        std::cout << "Ambos algoritmos obtienen la misma distancia optima.\n";
+        std::cout << "Ambos algoritmos obtienen la misma distancia optima\n";
 
         // guardamos una única solución con las dos líneas exigidas
         std::ofstream salida(argv[2]);
