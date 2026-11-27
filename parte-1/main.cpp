@@ -2,6 +2,8 @@
 #include "dijkstra.hpp"
 #include "a_estrella.hpp"
 
+#include <chrono>
+#include <cmath>
 #include <exception>
 #include <fstream>
 #include <iomanip>
@@ -12,7 +14,7 @@
 #include <string>
 
 namespace {
-    // quitamos los espacios y los saltos que puedan rodear al código
+    // quitamos los espacios que puedan rodear al código del aeropuerto
     std::string quitarEspacios(const std::string& texto) {
         std::size_t inicio = texto.find_first_not_of(" \t\r\n");
 
@@ -25,11 +27,9 @@ namespace {
         return texto.substr(inicio, fin - inicio + 1);
     }
 
-    // preparamos las dos líneas que mostraremos y guardaremos
+    // preparamos la distancia y el recorrido con el formato del enunciado
     std::string prepararSalida(const Resultado& resultado) {
         std::ostringstream salida;
-
-        // usamos el punto decimal aunque el equipo tenga otra configuración
         salida.imbue(std::locale::classic());
 
         salida << std::fixed << std::setprecision(2);
@@ -47,32 +47,41 @@ namespace {
 
         return salida.str();
     }
+
+    // mostramos la solución y las medidas del algoritmo que hemos ejecutado
+    void mostrarResultado(
+        const std::string& nombre,
+        const Resultado& resultado,
+        double tiempo
+    ) {
+        std::cout << "Algoritmo: " << nombre << '\n';
+
+        if (resultado.encontrado) {
+            std::cout << prepararSalida(resultado);
+        } else {
+            std::cout << "No hay una ruta entre los aeropuertos\n";
+        }
+
+        std::cout << "Nodos expandidos: " << resultado.expandidos << '\n';
+        std::cout << "Nodos generados: " << resultado.generados << '\n';
+        std::cout << "Maximo de abierta: " << resultado.maximoAbierta << '\n';
+
+        std::cout << std::fixed << std::setprecision(3);
+        std::cout << "Tiempo de busqueda: " << tiempo << " ms\n\n";
+    }
 }
 
-// leemos el problema, buscamos la ruta y escribimos el resultado
+// resolvemos el mismo problema con los dos algoritmos
 int main(int argc, char* argv[]) {
-    // recibimos entrada y salida, y opcionalmente el algoritmo
-    if (argc != 3 && argc != 4) {
+    if (argc != 3) {
         std::cerr
             << "Uso: " << argv[0]
-            << " entrada salida [a_estrella|dijkstra]\n";
+            << " fichero-entrada fichero-salida\n";
 
         return 1;
     }
 
     try {
-        std::string algoritmo = "a_estrella";
-
-        if (argc == 4) {
-            algoritmo = argv[3];
-        }
-
-        if (algoritmo != "a_estrella" && algoritmo != "dijkstra") {
-            throw std::runtime_error(
-                "el algoritmo debe ser a_estrella o dijkstra"
-            );
-        }
-
         std::ifstream entrada(argv[1]);
 
         if (!entrada.is_open()) {
@@ -84,7 +93,7 @@ int main(int argc, char* argv[]) {
         std::string origen;
         std::string destino;
 
-        // cada aeropuerto debe aparecer en una línea distinta
+        // leemos un aeropuerto en cada línea
         if (
             !std::getline(entrada, origen) ||
             !std::getline(entrada, destino)
@@ -103,7 +112,7 @@ int main(int argc, char* argv[]) {
             );
         }
 
-        // permitimos líneas vacías al final, pero no más datos
+        // permitimos líneas vacías al final, pero no datos adicionales
         std::string linea;
 
         while (std::getline(entrada, linea)) {
@@ -120,32 +129,65 @@ int main(int argc, char* argv[]) {
 
         entrada.close();
 
-        // buscamos los csv en el directorio desde el que se ejecuta el programa
+        // cargamos el grafo una sola vez para las dos búsquedas
         Grafo grafo;
         grafo.cargar("vertices.csv", "edges.csv");
 
         int inicio = grafo.buscarAeropuerto(origen);
         int fin = grafo.buscarAeropuerto(destino);
 
-        Resultado resultado;
+        // medimos solo la búsqueda de dijkstra
+        auto comienzoDijkstra = std::chrono::steady_clock::now();
 
-        if (algoritmo == "dijkstra") {
-            resultado = dijkstra(grafo, inicio, fin);
-        } else {
-            resultado = astar(grafo, inicio, fin);
+        Resultado resultadoDijkstra = dijkstra(grafo, inicio, fin);
+
+        auto finalDijkstra = std::chrono::steady_clock::now();
+
+        double tiempoDijkstra =
+            std::chrono::duration<double, std::milli>(
+                finalDijkstra - comienzoDijkstra
+            ).count();
+
+        // a estrella empieza una búsqueda nueva con sus propias estructuras
+        auto comienzoEstrella = std::chrono::steady_clock::now();
+
+        Resultado resultadoEstrella = astar(grafo, inicio, fin);
+
+        auto finalEstrella = std::chrono::steady_clock::now();
+
+        double tiempoEstrella =
+            std::chrono::duration<double, std::milli>(
+                finalEstrella - comienzoEstrella
+            ).count();
+
+        mostrarResultado("Dijkstra", resultadoDijkstra, tiempoDijkstra);
+        mostrarResultado("A*", resultadoEstrella, tiempoEstrella);
+
+        // ambos deben coincidir en si existe una solución
+        if (resultadoDijkstra.encontrado != resultadoEstrella.encontrado) {
+            throw std::runtime_error(
+                "Los algoritmos no coinciden en si existe una ruta"
+            );
         }
 
-        if (!resultado.encontrado) {
-            std::cerr
-                << "No hay una ruta desde "
-                << origen << " hasta " << destino << '\n';
-
+        if (!resultadoEstrella.encontrado) {
             return 2;
         }
 
-        std::string texto = prepararSalida(resultado);
+        // dejamos un pequeño margen por las operaciones con decimales
+        double diferencia = std::abs(
+            resultadoDijkstra.distancia - resultadoEstrella.distancia
+        );
 
-        // abrimos la salida después de encontrar una solución
+        if (diferencia > 0.000001) {
+            throw std::runtime_error(
+                "Los algoritmos han obtenido distancias diferentes"
+            );
+        }
+
+        std::cout << "Ambos algoritmos obtienen la misma distancia optima.\n";
+
+        // guardamos una única solución con las dos líneas exigidas
         std::ofstream salida(argv[2]);
 
         if (!salida.is_open()) {
@@ -154,7 +196,7 @@ int main(int argc, char* argv[]) {
             );
         }
 
-        salida << texto;
+        salida << prepararSalida(resultadoEstrella);
         salida.close();
 
         if (!salida) {
@@ -163,14 +205,10 @@ int main(int argc, char* argv[]) {
             );
         }
 
-        // mostramos exactamente el mismo contenido que hemos guardado
-        std::cout << texto;
-
         return 0;
-    } catch (const std::exception& error) {
-        // enviamos los errores por separado de la salida de la solución
-        std::cerr << "Error: " << error.what() << '\n';
 
+    } catch (const std::exception& error) {
+        std::cerr << "Error: " << error.what() << '\n';
         return 1;
     }
 }
