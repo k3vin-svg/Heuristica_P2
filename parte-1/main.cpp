@@ -1,9 +1,7 @@
 #include "grafo.hpp"
 #include "dijkstra.hpp"
-#include "a_estrella.hpp"
 
 #include <chrono>
-#include <cmath>
 #include <exception>
 #include <fstream>
 #include <iomanip>
@@ -48,28 +46,34 @@ namespace {
         return salida.str();
     }
 
-    // mostramos la solución y las medidas del algoritmo que hemos ejecutado
+        // mostramos las medidas por separado de la solución
     void mostrarResultado(
         const std::string& nombre,
         const Resultado& resultado,
         double tiempo
     ) {
-        std::cout << "Algoritmo: " << nombre << '\n';
+        std::cerr << "Algoritmo: " << nombre << '\n';
+        std::cerr << "Nodos expandidos: " << resultado.expandidos << '\n';
+        std::cerr << "Nodos generados: " << resultado.generados << '\n';
+        std::cerr << "Conexiones examinadas: "
+                  << resultado.conexionesExaminadas << '\n';
 
-        if (resultado.encontrado) {
-            std::cout << prepararSalida(resultado);
+        std::cerr << std::fixed << std::setprecision(3);
+
+        if (resultado.expandidos > 0) {
+            // calculamos la media de conexiones por nodo expandido
+            double ramificacion =
+                static_cast<double>(resultado.conexionesExaminadas) / resultado.expandidos;
+            std::cerr << "Ramificacion media: " << ramificacion << '\n';
         } else {
-            std::cout << "No hay una ruta entre los aeropuertos\n";
+            std::cerr << "Ramificacion media: no aplica\n";
         }
 
-        std::cout << "Nodos expandidos: " << resultado.expandidos << '\n';
-        std::cout << "Nodos generados: " << resultado.generados << '\n';
-        std::cout << std::fixed << std::setprecision(3);
-        std::cout << "Tiempo de busqueda: " << tiempo << "ms\n\n";
+        std::cerr << "Tiempo de busqueda: " << tiempo << " ms\n";
     }
 }
 
-// resolvemos el mismo problema con los dos algoritmos
+// resolvemos el problema de distancia con dijkstra
 int main(int argc, char* argv[]) {
     if (argc != 3) {
         std::cerr
@@ -127,7 +131,7 @@ int main(int argc, char* argv[]) {
 
         entrada.close();
 
-        // cargamos el grafo una sola vez para las dos búsquedas
+        // cargamos los aeropuertos y sus conexiones
         Grafo grafo;
         grafo.cargar("vertices.csv", "edges.csv");
 
@@ -146,44 +150,12 @@ int main(int argc, char* argv[]) {
                 finalDijkstra - comienzoDijkstra
             ).count();
 
-        // a estrella empieza una búsqueda nueva con sus propias estructuras
-        auto comienzoEstrella = std::chrono::steady_clock::now();
+                mostrarResultado("Dijkstra", resultadoDijkstra, tiempoDijkstra);
 
-        Resultado resultadoEstrella = astar(grafo, inicio, fin);
-
-        auto finalEstrella = std::chrono::steady_clock::now();
-
-        double tiempoEstrella =
-            std::chrono::duration<double, std::milli>(
-                finalEstrella - comienzoEstrella
-            ).count();
-
-        mostrarResultado("Dijkstra", resultadoDijkstra, tiempoDijkstra);
-        mostrarResultado("A*", resultadoEstrella, tiempoEstrella);
-
-        // ambos deben coincidir en si existe una solución
-        if (resultadoDijkstra.encontrado != resultadoEstrella.encontrado) {
-            throw std::runtime_error(
-                "Los algoritmos no coinciden en si existe una ruta"
-            );
-        }
-
-        if (!resultadoEstrella.encontrado) {
+        if (!resultadoDijkstra.encontrado) {
+            std::cerr << "No hay una ruta entre los aeropuertos\n";
             return 2;
         }
-
-        // dejamos un pequeño margen por las operaciones con decimales
-        double diferencia = std::abs(
-            resultadoDijkstra.distancia - resultadoEstrella.distancia
-        );
-
-        if (diferencia > 0.000001) {
-            throw std::runtime_error(
-                "Los algoritmos han obtenido distancias diferentes"
-            );
-        }
-
-        std::cout << "Ambos algoritmos obtienen la misma distancia optima\n";
 
         // guardamos una única solución con las dos líneas exigidas
         std::ofstream salida(argv[2]);
@@ -194,7 +166,7 @@ int main(int argc, char* argv[]) {
             );
         }
 
-        salida << prepararSalida(resultadoEstrella);
+        salida << prepararSalida(resultadoDijkstra);
         salida.close();
 
         if (!salida) {
@@ -202,7 +174,8 @@ int main(int argc, char* argv[]) {
                 "No se ha podido guardar el resultado completo"
             );
         }
-
+        // mostramos las mismas dos líneas que hemos guardado
+        std::cout << prepararSalida(resultadoDijkstra);
         return 0;
 
     } catch (const std::exception& error) {

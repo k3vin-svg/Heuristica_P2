@@ -43,10 +43,10 @@ public:
     // insertamos un nodo indicando su indice y sus prioridades
     void insertar(std::size_t indiceNodo, double f, double h);
 
-    // extraemos la entrada con menor prioridad
+    // extraemos la entrada con menor f, desempatando por h y orden
     EntradaAbierta extraerMinimo();
 
-    // consultamos la entrada con menor prioridad sin eliminarla
+    // consultamos esa entrada sin eliminarla
     const EntradaAbierta& consultarMinimo() const;
 
     // comprobamos si quedan entradas pendientes

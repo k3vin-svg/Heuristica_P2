@@ -4,7 +4,7 @@ CXXFLAGS = -O3 -std=c++17 -Wall
 TARGET = principal
 
 # reunimos los objetos que necesitamos para crear el ejecutable
-OBJS = main.o estado.o grafo.o dijkstra.o a_estrella.o abierta.o cerrada.o
+OBJS = main.o estado.o grafo.o dijkstra.o abierta.o cerrada.o
 
 all: $(TARGET)
 
@@ -13,7 +13,7 @@ $(TARGET): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
 
 # compilamos el programa principal
-main.o: main.cpp grafo.hpp estado.hpp dijkstra.hpp a_estrella.hpp
+main.o: main.cpp grafo.hpp estado.hpp dijkstra.hpp resultado.hpp
 	$(CXX) $(CXXFLAGS) -c main.cpp
 
 # compilamos los estados y los nodos de búsqueda
@@ -25,12 +25,8 @@ grafo.o: grafo.cpp grafo.hpp estado.hpp
 	$(CXX) $(CXXFLAGS) -c grafo.cpp
 
 # compilamos la búsqueda con dijkstra
-dijkstra.o: dijkstra.cpp dijkstra.hpp grafo.hpp estado.hpp abierta.hpp cerrada.hpp
+dijkstra.o: dijkstra.cpp dijkstra.hpp resultado.hpp grafo.hpp estado.hpp abierta.hpp cerrada.hpp
 	$(CXX) $(CXXFLAGS) -c dijkstra.cpp
-
-# compilamos la búsqueda con a estrella
-a_estrella.o: a_estrella.cpp a_estrella.hpp dijkstra.hpp grafo.hpp estado.hpp abierta.hpp cerrada.hpp
-	$(CXX) $(CXXFLAGS) -c a_estrella.cpp
 
 # compilamos el montículo de la abierta
 abierta.o: abierta.cpp abierta.hpp

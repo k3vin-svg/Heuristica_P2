@@ -84,6 +84,8 @@ Resultado dijkstra(const Grafo& grafo, int origen, int destino) {
             const Conexion& conexion :
             grafo.obtenerConexiones(actual.estado)
         ) {
+            // contamos cada conexión examinada
+            resultado.conexionesExaminadas++;
             if (cerrada.contiene(conexion.destino)) {
                 continue;
             }
