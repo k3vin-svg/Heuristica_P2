@@ -55,9 +55,6 @@ namespace {
         std::cerr << "Algoritmo: " << nombre << '\n';
         std::cerr << "Nodos expandidos: " << resultado.expandidos << '\n';
         std::cerr << "Nodos generados: " << resultado.generados << '\n';
-        std::cerr << "Conexiones examinadas: "
-                  << resultado.conexionesExaminadas << '\n';
-
         std::cerr << std::fixed << std::setprecision(3);
 
         if (resultado.expandidos > 0) {
