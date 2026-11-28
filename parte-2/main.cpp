@@ -138,7 +138,7 @@ int main(int argc, char* argv[]) {
         int inicio = grafo.buscarAeropuerto(origen);
         int fin = grafo.buscarAeropuerto(destino);
 
-        // medimos solo la búsqueda de dijkstra
+        // medimos solo la búsqueda de A*
         auto comienzoEstrella = std::chrono::steady_clock::now();
 
         Resultado resultadoEstrella = a_estrella(grafo, inicio, fin);
